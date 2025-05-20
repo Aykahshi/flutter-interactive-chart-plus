@@ -66,6 +66,9 @@ class InteractiveChart extends StatefulWidget {
   /// Provides X-axis offset details.
   final ValueChanged<XAxisOffsetDetails>? onXOffsetChanged;
 
+  /// The current price to be displayed on the right side of the chart.
+  final double? currentPrice;
+
   const InteractiveChart({
     Key? key,
     required this.candles,
@@ -76,6 +79,7 @@ class InteractiveChart extends StatefulWidget {
     this.overlayInfo,
     this.onTap,
     this.onCandleResize,
+    this.currentPrice,
     this.onXOffsetChanged,
   })  : this.style = style ?? const ChartStyle(),
         assert(candles.length >= 3,
@@ -192,6 +196,7 @@ class _InteractiveChartState extends State<InteractiveChart> {
               tapPosition: _tapPosition,
               leadingTrends: leadingTrends,
               trailingTrends: trailingTrends,
+              currentPrice: widget.currentPrice,
             ),
           ),
           duration: Duration(milliseconds: 300),

@@ -54,6 +54,9 @@ class ChartStyle {
   /// This appears when user clicks on the chart.
   final Color overlayBackgroundColor;
 
+  /// The style of current price labels (on the right of the chart).
+  final CurrentPriceStyle currentPriceStyle;
+
   const ChartStyle({
     this.volumeHeightFactor = 0.2,
     this.priceLabelWidth = 48.0,
@@ -77,5 +80,34 @@ class ChartStyle {
     this.priceGridLineColor = Colors.grey,
     this.selectionHighlightColor = const Color(0x33757575),
     this.overlayBackgroundColor = const Color(0xEE757575),
+    this.currentPriceStyle = const CurrentPriceStyle(
+        labelStyle: TextStyle(
+          fontSize: 12,
+          color: Colors.white,
+        ),
+        rectPadding: 4.0,
+        rectRadius: 2.0,
+        rectColor: Colors.red),
   });
+}
+
+class CurrentPriceStyle {
+  const CurrentPriceStyle({
+    required this.labelStyle,
+    required this.rectPadding,
+    required this.rectRadius,
+    required this.rectColor,
+  });
+
+  /// The style of current price labels (on the right of the chart).
+  final TextStyle labelStyle;
+
+  /// The padding around the current price rect.
+  final double rectPadding;
+
+  /// The radius of the current price rect.
+  final double rectRadius;
+
+  /// The color of the current price rect.
+  final Color rectColor;
 }

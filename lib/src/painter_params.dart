@@ -1,11 +1,13 @@
 import 'dart:ui';
+
 import 'package:flutter/widgets.dart';
 
-import 'chart_style.dart';
 import 'candle_data.dart';
+import 'chart_style.dart';
 
 class PainterParams {
   final List<CandleData> candles;
+  final double? currentPrice;
   final ChartStyle style;
   final Size size;
   final double candleWidth;
@@ -23,6 +25,7 @@ class PainterParams {
 
   PainterParams({
     required this.candles,
+    this.currentPrice,
     required this.style,
     required this.size,
     required this.candleWidth,
@@ -97,11 +100,15 @@ class PainterParams {
       tapPosition: b.tapPosition,
       leadingTrends: b.leadingTrends,
       trailingTrends: b.trailingTrends,
+      currentPrice:
+          b.currentPrice != null ? lerpField((p) => p.currentPrice!) : null,
     );
   }
 
   bool shouldRepaint(PainterParams other) {
     if (candles.length != other.candles.length) return true;
+
+    if (other.currentPrice != currentPrice) return true;
 
     if (size != other.size ||
         candleWidth != other.candleWidth ||
