@@ -19,6 +19,12 @@ class InteractiveChart extends StatefulWidget {
   /// and allow users to freely zoom and pan however they like.
   final List<CandleData> candles;
 
+  /// The time frame of the chart, defaults to day.
+  final TimeFrame timeFrame;
+
+  /// The callback function when the time frame changes.
+  final ValueChanged<TimeFrame>? onTimeFrameChanged;
+
   /// The default number of data points to be displayed when the chart is first
   /// opened. The default value is 90. If [CandleData] does not have enough data
   /// points, the chart will display all of them.
@@ -81,6 +87,8 @@ class InteractiveChart extends StatefulWidget {
     this.onCandleResize,
     this.currentPrice,
     this.onXOffsetChanged,
+    this.timeFrame = TimeFrame.day,
+    this.onTimeFrameChanged,
   })  : this.style = style ?? const ChartStyle(),
         assert(candles.length >= 3,
             "InteractiveChart requires 3 or more CandleData"),
@@ -111,6 +119,14 @@ class _InteractiveChartState extends State<InteractiveChart> {
   late Offset _initialFocalPoint;
   PainterParams? _prevParams; // used in onTapUp event
 
+  late TimeFrame _currentTimeFrame;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTimeFrame = widget.timeFrame;
+  }
+
   @override
   void didUpdateWidget(covariant InteractiveChart oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -118,6 +134,11 @@ class _InteractiveChartState extends State<InteractiveChart> {
       // Change offset to show the latest candle when new data is added
       _startOffset =
           max(0, widget.candles.length * _candleWidth - _prevChartWidth!);
+    }
+    if (oldWidget.timeFrame != widget.timeFrame) {
+      // Reset chart state when time frame changes to force re-calculate candle width and start offset
+      _prevChartWidth = null;
+      widget.onTimeFrameChanged?.call(widget.timeFrame);
     }
   }
 
@@ -334,19 +355,30 @@ class _InteractiveChartState extends State<InteractiveChart> {
   }
 
   String defaultTimeLabel(int timestamp, int visibleDataCount) {
-    final date = DateTime.fromMillisecondsSinceEpoch(timestamp)
-        .toIso8601String()
-        .split("T")
-        .first
-        .split("-");
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
 
-    if (visibleDataCount > 20) {
-      // If more than 20 data points are visible, we should show year and month.
-      return "${date[0]}-${date[1]}"; // yyyy-mm
-    } else {
-      // Otherwise, we should show month and date.
-      return "${date[1]}-${date[2]}"; // mm-dd
+    switch (_currentTimeFrame) {
+      case TimeFrame.day:
+        // If more than 20 data points are visible, we should show year and month.
+        if (visibleDataCount > 20) {
+          return "${date.year}-${date.month.toString().padLeft(2, '0')}"; // yyyy-mm
+        } else {
+          return "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}"; // mm-dd
+        }
+      case TimeFrame.week:
+        // Week line display format
+        return "W${_getWeekNumber(date)} ${date.year}"; // e.g. W12 2025
+      case TimeFrame.month:
+        // Month line display format
+        return "${date.year}-${date.month.toString().padLeft(2, '0')}"; // yyyy-mm
     }
+  }
+
+  // Get the week number of the year
+  int _getWeekNumber(DateTime date) {
+    final firstDayOfYear = DateTime(date.year, 1, 1);
+    final dayOfYear = date.difference(firstDayOfYear).inDays;
+    return ((dayOfYear - date.weekday + 10) / 7).floor();
   }
 
   String defaultPriceLabel(double price) => price.toStringAsFixed(2);

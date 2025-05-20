@@ -71,6 +71,130 @@ class CandleData {
     return result;
   }
 
+  static List<CandleData> convertToWeekly(List<CandleData> dailyCandles) {
+    if (dailyCandles.isEmpty) return [];
+
+    // candle data group by week
+    Map<int, List<CandleData>> weeklyGroups = {};
+
+    for (var candle in dailyCandles) {
+      // get the week of the date
+      DateTime date = DateTime.fromMillisecondsSinceEpoch(candle.timestamp);
+      // calculate the first day of the week (Monday)
+      DateTime weekStart = date.subtract(Duration(days: date.weekday - 1));
+      int weekKey = DateTime(weekStart.year, weekStart.month, weekStart.day)
+          .millisecondsSinceEpoch;
+
+      if (!weeklyGroups.containsKey(weekKey)) {
+        weeklyGroups[weekKey] = [];
+      }
+      weeklyGroups[weekKey]!.add(candle);
+    }
+
+    // merge weekly candle data
+    List<CandleData> weeklyCandles = [];
+    weeklyGroups.forEach((timestamp, candles) {
+      if (candles.isEmpty) return;
+
+      // open price of the week
+      double? open = candles.first.open;
+
+      // close price of the week
+      double? close = candles.last.close;
+
+      // highest price of the week
+      double? high = candles
+          .map((c) => c.high ?? double.negativeInfinity)
+          .reduce((a, b) => a > b ? a : b);
+      if (high == double.negativeInfinity) high = null;
+
+      // lowest price of the week
+      double? low = candles
+          .map((c) => c.low ?? double.infinity)
+          .reduce((a, b) => a < b ? a : b);
+      if (low == double.infinity) low = null;
+
+      // volume of the week
+      double? volume =
+          candles.map((c) => c.volume ?? 0).reduce((a, b) => a + b);
+
+      // create weekly candle
+      weeklyCandles.add(CandleData(
+        timestamp: timestamp,
+        open: open,
+        close: close,
+        high: high,
+        low: low,
+        volume: volume,
+      ));
+    });
+
+    // sort by timestamp
+    weeklyCandles.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return weeklyCandles;
+  }
+
+  /// convert daily candle data to monthly candle data
+  static List<CandleData> convertToMonthly(List<CandleData> dailyCandles) {
+    if (dailyCandles.isEmpty) return [];
+
+    // group by month
+    Map<int, List<CandleData>> monthlyGroups = {};
+
+    for (var candle in dailyCandles) {
+      // get the month of the date
+      DateTime date = DateTime.fromMillisecondsSinceEpoch(candle.timestamp);
+      int monthKey = DateTime(date.year, date.month, 1).millisecondsSinceEpoch;
+
+      if (!monthlyGroups.containsKey(monthKey)) {
+        monthlyGroups[monthKey] = [];
+      }
+      monthlyGroups[monthKey]!.add(candle);
+    }
+
+    // merge monthly candle data
+    List<CandleData> monthlyCandles = [];
+    monthlyGroups.forEach((timestamp, candles) {
+      if (candles.isEmpty) return;
+
+      // open price of the month
+      double? open = candles.first.open;
+
+      // close price of the month
+      double? close = candles.last.close;
+
+      // highest price of the month
+      double? high = candles
+          .map((c) => c.high ?? double.negativeInfinity)
+          .reduce((a, b) => a > b ? a : b);
+      if (high == double.negativeInfinity) high = null;
+
+      // lowest price of the month
+      double? low = candles
+          .map((c) => c.low ?? double.infinity)
+          .reduce((a, b) => a < b ? a : b);
+      if (low == double.infinity) low = null;
+
+      // volume of the month
+      double? volume =
+          candles.map((c) => c.volume ?? 0).reduce((a, b) => a + b);
+
+      // create monthly candle
+      monthlyCandles.add(CandleData(
+        timestamp: timestamp,
+        open: open,
+        close: close,
+        high: high,
+        low: low,
+        volume: volume,
+      ));
+    });
+
+    // sort by timestamp
+    monthlyCandles.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return monthlyCandles;
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
