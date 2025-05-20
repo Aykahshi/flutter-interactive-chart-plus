@@ -73,6 +73,7 @@ class ChartStyle {
         fontSize: 12,
         color: Colors.grey,
       ),
+      labelLeftGap: 4,
       highlightLabelStyle: TextStyle(
         fontSize: 12,
         color: Colors.white,
@@ -98,6 +99,7 @@ class ChartStyle {
         fontSize: 12,
         color: Colors.white,
       ),
+      labelLeftGap: 4,
       rectPadding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
       rectRadius: 4.0,
       rectColor: Colors.red,
@@ -108,6 +110,7 @@ class ChartStyle {
 class CurrentPriceStyle {
   const CurrentPriceStyle({
     required this.labelStyle,
+    required this.labelLeftGap,
     required this.rectPadding,
     required this.rectRadius,
     required this.rectColor,
@@ -122,6 +125,9 @@ class CurrentPriceStyle {
   /// The radius of the current price rect.
   final double rectRadius;
 
+  /// The left gap of label inside rect.
+  final double labelLeftGap;
+
   /// The color of the current price rect.
   final Color rectColor;
 }
@@ -129,6 +135,7 @@ class CurrentPriceStyle {
 class PriceLabelStyle {
   const PriceLabelStyle({
     required this.labelStyle,
+    required this.labelLeftGap,
     required this.highlightLabelStyle,
     required this.highlightBgPadding,
     required this.highlightBgRadius,
@@ -146,6 +153,9 @@ class PriceLabelStyle {
 
   /// The radius of the highlight background.
   final Radius highlightBgRadius;
+
+  /// The left gap of label inside rect.
+  final double labelLeftGap;
 
   /// The color of the highlight background.
   final Color highlightBgColor;

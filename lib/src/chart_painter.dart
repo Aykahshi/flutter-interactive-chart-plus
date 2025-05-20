@@ -138,7 +138,7 @@ class ChartPainter extends CustomPainter {
         priceTp.height + backgroundPadding.top + backgroundPadding.bottom;
 
     // Calculate position for the background rect and text
-    final rectX = params.chartWidth + 4;
+    final rectX = params.chartWidth + params.style.priceLabelStyle.labelLeftGap;
     final rectY = priceY - rectHeight / 2;
 
     // Draw the rounded rectangle background
@@ -190,7 +190,7 @@ class ChartPainter extends CustomPainter {
     final rectX = params.chartWidth + 4;
     final rectY = priceY - rectHeight / 2;
 
-    final textX = rectX + 6;
+    final textX = rectX + params.style.currentPriceStyle.labelLeftGap;
     final textY = priceY - priceTp.height / 2;
 
     // draw rounded rect background
@@ -344,8 +344,8 @@ class ChartPainter extends CustomPainter {
           ..color = params.style.selectionHighlightColor);
     canvas.restore();
     // Draw info pane
-    _drawTapInfoOverlay(canvas, params, candle);
     _drawSelectionHighlightPriceAndLabels(canvas, params, candle);
+    _drawTapInfoOverlay(canvas, params, candle);
   }
 
   void _drawTapInfoOverlay(canvas, PainterParams params, CandleData candle) {
