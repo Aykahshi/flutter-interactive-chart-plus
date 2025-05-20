@@ -10,6 +10,9 @@ import 'chart_painter.dart';
 import 'chart_style.dart';
 import 'painter_params.dart';
 
+// Time frame enum for different chart types
+enum TimeFrame { day, week, month }
+
 class InteractiveChart extends StatefulWidget {
   /// The full list of [CandleData] to be used for this chart.
   ///
