@@ -21,7 +21,7 @@ class ChartStyle {
   final TextStyle timeLabelStyle;
 
   /// The style of price labels (on the right of the chart).
-  final TextStyle priceLabelStyle;
+  final PriceLabelStyle priceLabelStyle;
 
   /// The style of overlay texts. These texts are drawn on top of the
   /// background color specified in [overlayBackgroundColor].
@@ -35,8 +35,11 @@ class ChartStyle {
   /// The color to use when the `close` price is lower than `open` price.
   final Color priceLossColor;
 
-  /// The color of the `volume` bars.
-  final Color volumeColor;
+  /// The color of the `volume` bars when `volume` is higher than `open` volume.
+  final Color volumeGainColor;
+
+  /// The color of the `volume` bars when `volume` is lower than `open` volume.
+  final Color volumeLossColor;
 
   /// The style of trend lines. If there are multiple lines, their styles will
   /// be chosen in the order of appearance in this list. If this list is shorter
@@ -65,29 +68,40 @@ class ChartStyle {
       fontSize: 16,
       color: Colors.grey,
     ),
-    this.priceLabelStyle = const TextStyle(
-      fontSize: 12,
-      color: Colors.grey,
+    this.priceLabelStyle = const PriceLabelStyle(
+      labelStyle: TextStyle(
+        fontSize: 12,
+        color: Colors.grey,
+      ),
+      highlightLabelStyle: TextStyle(
+        fontSize: 12,
+        color: Colors.white,
+      ),
+      highlightBgPadding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+      highlightBgRadius: Radius.circular(4.0),
+      highlightBgColor: const Color(0x33757575),
     ),
     this.overlayTextStyle = const TextStyle(
       fontSize: 16,
       color: Colors.white,
     ),
-    this.priceGainColor = Colors.green,
-    this.priceLossColor = Colors.red,
-    this.volumeColor = Colors.grey,
+    this.priceGainColor = Colors.red,
+    this.priceLossColor = Colors.green,
+    this.volumeGainColor = Colors.red,
+    this.volumeLossColor = Colors.green,
     this.trendLineStyles = const [],
     this.priceGridLineColor = Colors.grey,
     this.selectionHighlightColor = const Color(0x33757575),
     this.overlayBackgroundColor = const Color(0xEE757575),
     this.currentPriceStyle = const CurrentPriceStyle(
-        labelStyle: TextStyle(
-          fontSize: 12,
-          color: Colors.white,
-        ),
-        rectPadding: 4.0,
-        rectRadius: 2.0,
-        rectColor: Colors.red),
+      labelStyle: TextStyle(
+        fontSize: 12,
+        color: Colors.white,
+      ),
+      rectPadding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+      rectRadius: 4.0,
+      rectColor: Colors.red,
+    ),
   });
 }
 
@@ -103,11 +117,36 @@ class CurrentPriceStyle {
   final TextStyle labelStyle;
 
   /// The padding around the current price rect.
-  final double rectPadding;
+  final EdgeInsets rectPadding;
 
   /// The radius of the current price rect.
   final double rectRadius;
 
   /// The color of the current price rect.
   final Color rectColor;
+}
+
+class PriceLabelStyle {
+  const PriceLabelStyle({
+    required this.labelStyle,
+    required this.highlightLabelStyle,
+    required this.highlightBgPadding,
+    required this.highlightBgRadius,
+    required this.highlightBgColor,
+  });
+
+  /// The style of price labels (on the right of the chart).
+  final TextStyle labelStyle;
+
+  /// The style of price labels when highlighted.
+  final TextStyle highlightLabelStyle;
+
+  /// The padding around the highlight background.
+  final EdgeInsets highlightBgPadding;
+
+  /// The radius of the highlight background.
+  final Radius highlightBgRadius;
+
+  /// The color of the highlight background.
+  final Color highlightBgColor;
 }

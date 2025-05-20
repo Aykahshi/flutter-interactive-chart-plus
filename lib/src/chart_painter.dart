@@ -95,7 +95,7 @@ class ChartPainter extends CustomPainter {
       final priceTp = TextPainter(
         text: TextSpan(
           text: getPriceLabel(y),
-          style: params.style.priceLabelStyle,
+          style: params.style.priceLabelStyle.labelStyle,
         ),
       )
         ..textDirection = TextDirection.ltr
@@ -109,6 +109,59 @@ class ChartPainter extends CustomPainter {
     });
   }
 
+  void _drawSelectionHighlightPriceAndLabels(
+      canvas, PainterParams params, CandleData candle) {
+    final price = candle.close ?? candle.open ?? 0;
+    final priceY = params.fitPrice(price);
+
+    canvas.drawLine(
+      Offset(0, priceY),
+      Offset(params.chartWidth, priceY),
+      Paint()
+        ..strokeWidth = max(params.candleWidth * 0.2, 1.0)
+        ..color = params.style.selectionHighlightColor,
+    );
+    final priceTp = TextPainter(
+      text: TextSpan(
+        text: getPriceLabel(price),
+        style: params.style.priceLabelStyle.highlightLabelStyle,
+      ),
+    )
+      ..textDirection = TextDirection.ltr
+      ..layout();
+
+    // Define padding for the background rect
+    final backgroundPadding = params.style.priceLabelStyle.highlightBgPadding;
+    final rectWidth =
+        priceTp.width + backgroundPadding.left + backgroundPadding.right;
+    final rectHeight =
+        priceTp.height + backgroundPadding.top + backgroundPadding.bottom;
+
+    // Calculate position for the background rect and text
+    final rectX = params.chartWidth + 4;
+    final rectY = priceY - rectHeight / 2;
+
+    // Draw the rounded rectangle background
+    final RRect backgroundRRect = RRect.fromLTRBR(
+      rectX,
+      rectY,
+      rectX + rectWidth,
+      rectY + rectHeight,
+      params.style.priceLabelStyle.highlightBgRadius,
+    );
+    canvas.drawRRect(
+      backgroundRRect,
+      Paint()..color = params.style.priceLabelStyle.highlightBgColor,
+    );
+
+    priceTp.paint(
+        canvas,
+        Offset(
+          params.chartWidth + 10,
+          params.fitPrice(price) - priceTp.height / 2,
+        ));
+  }
+
   void _drawCurrentPriceLabel(
     Canvas canvas,
     PainterParams params,
@@ -117,6 +170,9 @@ class ChartPainter extends CustomPainter {
     if (currentPrice == null) {
       return;
     }
+    final priceY =
+        params.fitPrice(currentPrice).clamp(0, params.chartHeight).toDouble();
+
     final priceTp = TextPainter(
       text: TextSpan(
         text: getPriceLabel(currentPrice),
@@ -126,21 +182,32 @@ class ChartPainter extends CustomPainter {
       ..textDirection = TextDirection.ltr
       ..layout();
 
-    final dx = params.chartWidth + 4;
-    final dy =
-        params.fitPrice(currentPrice).clamp(0, params.chartHeight).toDouble() -
-            priceTp.height / 2;
-
+    // define rect padding and size
     final padding = params.style.currentPriceStyle.rectPadding;
-    final radius = params.style.currentPriceStyle.rectRadius;
-    final rectColor = params.style.currentPriceStyle.rectColor;
+    final rectWidth = priceTp.width + padding.left + padding.right;
+    final rectHeight = priceTp.height + padding.top + padding.bottom;
 
-    final rect = Rect.fromLTWH(
-        dx, dy, priceTp.width + 2 * padding, priceTp.height + 2 * padding);
-    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
-    canvas.drawRRect(rrect, Paint()..color = rectColor);
+    final rectX = params.chartWidth + 4;
+    final rectY = priceY - rectHeight / 2;
 
-    priceTp.paint(canvas, Offset(dx + padding, dy + padding));
+    final textX = rectX + 6;
+    final textY = priceY - priceTp.height / 2;
+
+    // draw rounded rect background
+    final RRect backgroundRRect = RRect.fromLTRBR(
+      rectX,
+      rectY,
+      rectX + rectWidth,
+      rectY + rectHeight,
+      Radius.circular(params.style.currentPriceStyle.rectRadius),
+    );
+    canvas.drawRRect(
+      backgroundRRect,
+      Paint()..color = params.style.currentPriceStyle.rectColor,
+    );
+
+    // draw price text
+    priceTp.paint(canvas, Offset(textX, textY));
   }
 
   void _drawCurrentPriceLine(Canvas canvas, PainterParams params) {
@@ -149,7 +216,7 @@ class ChartPainter extends CustomPainter {
       return;
     }
     final paint = Paint()
-      ..color = Colors.red
+      ..color = params.style.currentPriceStyle.rectColor
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
 
@@ -201,15 +268,24 @@ class ChartPainter extends CustomPainter {
     }
     // Draw volume bar
     final volume = candle.volume;
-    if (volume != null) {
+    if (volume != null && open != null && close != null) {
+      Color color = open > close
+          ? params.style.volumeLossColor
+          : params.style.volumeGainColor;
+
+      if (open == close) {
+        color = Colors.grey;
+      }
+
       canvas.drawLine(
         Offset(x, params.chartHeight),
         Offset(x, params.fitVolume(volume)),
         Paint()
           ..strokeWidth = thickWidth
-          ..color = params.style.volumeColor,
+          ..color = color,
       );
     }
+
     // Draw trend line
     for (int j = 0; j < candle.trends.length; j++) {
       final trendLinePaint = params.style.trendLineStyles.at(j) ??
@@ -264,11 +340,12 @@ class ChartPainter extends CustomPainter {
         Offset(i * params.candleWidth, 0.0),
         Offset(i * params.candleWidth, params.chartHeight),
         Paint()
-          ..strokeWidth = max(params.candleWidth * 0.88, 1.0)
+          ..strokeWidth = max(params.candleWidth * 0.2, 1.0)
           ..color = params.style.selectionHighlightColor);
     canvas.restore();
     // Draw info pane
     _drawTapInfoOverlay(canvas, params, candle);
+    _drawSelectionHighlightPriceAndLabels(canvas, params, candle);
   }
 
   void _drawTapInfoOverlay(canvas, PainterParams params, CandleData candle) {
