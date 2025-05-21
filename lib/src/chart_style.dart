@@ -47,7 +47,7 @@ class ChartStyle {
   ///
   /// 如果有多條趨勢線，它們的樣式將按照在這個列表中的出現順序選擇。
   /// 如果這個列表比趨勢線的數量短，則會使用預設的藍色繪制。
-  final List<Paint> trendLineStyles;
+  final Map<String, Paint> trendLineStyles;
 
   /// The color of the price grid line.
   final Color priceGridLineColor;
@@ -62,15 +62,14 @@ class ChartStyle {
 
   /// The style of current price labels (on the right of the chart).
   final CurrentPriceStyle currentPriceStyle;
-  
+
   /// 獲取趨勢線樣式，如果沒有設定，則使用趨勢線的預設樣式
-  Paint getTrendLineStyle(TrendLine trendLine, int index) {
-    // 如果索引在範圍內，則使用對應的樣式
-    if (index < trendLineStyles.length) {
-      return trendLineStyles[index];
-    }
-    // 否則使用趨勢線的預設樣式
-    return trendLine.defaultStyle;
+  Paint getTrendLineStyle(TrendLine trendLine) {
+    return trendLineStyles[trendLine.id] ?? trendLine.defaultStyle;
+  }
+
+  List<Paint> get trendLineStylesList {
+    return trendLineStyles.values.toList();
   }
 
   const ChartStyle({
@@ -103,7 +102,7 @@ class ChartStyle {
     this.priceLossColor = Colors.green,
     this.volumeGainColor = Colors.red,
     this.volumeLossColor = Colors.green,
-    this.trendLineStyles = const [],
+    this.trendLineStyles = const {},
     this.priceGridLineColor = Colors.grey,
     this.selectionHighlightColor = const Color(0x33757575),
     this.overlayBackgroundColor = const Color(0xEE757575),
