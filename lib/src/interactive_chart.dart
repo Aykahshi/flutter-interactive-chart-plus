@@ -128,6 +128,12 @@ class _InteractiveChartState extends State<InteractiveChart> {
   void initState() {
     super.initState();
     _currentTimeFrame = widget.timeFrame;
+
+    _startOffset = 0.0;
+    _candleWidth = 10.0;
+    _prevCandleWidth = 10.0;
+    _prevStartOffset = 0.0;
+    _initialFocalPoint = Offset.zero;
   }
 
   @override
@@ -311,15 +317,31 @@ class _InteractiveChartState extends State<InteractiveChart> {
     });
 
     if (_prevStartOffset != startOffset) {
+      // Calculate the last visible candle
+      final int start = (startOffset / candleWidth).floor();
+      final int count = (w / candleWidth).ceil();
+      final int end = (start + count).clamp(start, widget.candles.length);
+
+      // Get the last visible candle if available
+      CandleData? lastVisibleCandle;
+      if (start < widget.candles.length &&
+          end > 0 &&
+          end <= widget.candles.length) {
+        lastVisibleCandle = widget.candles[end - 1];
+      }
+
       widget.onXOffsetChanged?.call(XAxisOffsetDetails(
         offset: startOffset,
         maxOffset: maxStartOffset,
+        lastVisibleCandle: lastVisibleCandle,
       ));
     }
   }
 
   _handleResize(double w) {
     if (w == _prevChartWidth) return;
+    double oldStartOffset = _startOffset;
+
     if (_prevChartWidth != null) {
       // Re-clamp when size changes (e.g. screen rotation)
       _candleWidth = _candleWidth.clamp(
@@ -342,6 +364,27 @@ class _InteractiveChartState extends State<InteractiveChart> {
       _startOffset = (widget.candles.length - count) * _candleWidth;
     }
     _prevChartWidth = w;
+
+    // Notify about offset change if it changed, including the last visible candle
+    if (oldStartOffset != _startOffset && widget.onXOffsetChanged != null) {
+      final int start = (_startOffset / _candleWidth).floor();
+      final int count = (w / _candleWidth).ceil();
+      final int end = (start + count).clamp(start, widget.candles.length);
+
+      // Get the last visible candle if available
+      CandleData? lastVisibleCandle;
+      if (start < widget.candles.length &&
+          end > 0 &&
+          end <= widget.candles.length) {
+        lastVisibleCandle = widget.candles[end - 1];
+      }
+
+      widget.onXOffsetChanged?.call(XAxisOffsetDetails(
+        offset: _startOffset,
+        maxOffset: _getMaxStartOffset(w, _candleWidth),
+        lastVisibleCandle: lastVisibleCandle,
+      ));
+    }
   }
 
   // The narrowest candle width, i.e. when drawing all available data points.
