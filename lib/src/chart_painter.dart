@@ -118,7 +118,7 @@ class ChartPainter extends CustomPainter {
       Offset(0, priceY),
       Offset(params.chartWidth, priceY),
       Paint()
-        ..strokeWidth = max(params.candleWidth * 0.2, 1.0)
+        ..strokeWidth = 1.0
         ..color = params.style.selectionHighlightColor,
     );
     final priceTp = TextPainter(
@@ -340,7 +340,7 @@ class ChartPainter extends CustomPainter {
         Offset(i * params.candleWidth, 0.0),
         Offset(i * params.candleWidth, params.chartHeight),
         Paint()
-          ..strokeWidth = max(params.candleWidth * 0.2, 1.0)
+          ..strokeWidth = 1.0
           ..color = params.style.selectionHighlightColor);
     canvas.restore();
     // Draw info pane
