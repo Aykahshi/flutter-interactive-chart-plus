@@ -343,14 +343,11 @@ class ChartPainter extends CustomPainter {
     }
 
     // 繪制新的趨勢線實作
-    int trendIndex = 0;
     for (final trendLine in candle.trendLines.values) {
       if (trendLine.value == null) continue;
 
       // 獲取趨勢線樣式
-      final Paint trendLinePaint =
-          params.style.getTrendLineStyle(trendLine, trendIndex);
-      trendIndex++;
+      final Paint trendLinePaint = params.style.getTrendLineStyle(trendLine);
 
       // 繪制趨勢線
       if (i > 0) {
