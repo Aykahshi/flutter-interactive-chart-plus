@@ -1,3 +1,5 @@
+import 'trend_line.dart';
+
 class CandleData {
   /// The timestamp of this data point, in milliseconds since epoch.
   final int timestamp;
@@ -23,17 +25,27 @@ class CandleData {
   /// The volume information of this data point.
   final double? volume;
 
-  /// Data holder for additional trend lines, for this data point.
+  /// 趨勢線集合，使用 Map 存儲，key 為趨勢線的 id
   ///
-  /// For a single trend line, we can assign it as a list with a single element.
-  /// For example if we want "7 days moving average", do something like
-  /// `trends = [ma7]`. If there are multiple tread lines, we can assign a list
-  /// with multiple elements, like `trends = [ma7, ma30]`.
-  /// If we don't want any trend lines, we can assign an empty list.
+  /// 例如，若要添加 7 日移動平均線，可以使用：
+  /// ```dart
+  /// trendLines = {'MA7': MALine(7, value: ma7Value)}
+  /// ```
   ///
-  /// This should be an unmodifiable list, so please do not use `add`
-  /// or `clear` methods on the list. Always assign a new list if values
-  /// are changed. Otherwise the UI might not be updated.
+  /// 若要添加多條趨勢線，可以使用：
+  /// ```dart
+  /// trendLines = {
+  ///   'MA7': MALine(7, value: ma7Value),
+  ///   'MA30': MALine(30, value: ma30Value),
+  /// }
+  /// ```
+  final Map<String, TrendLine> trendLines;
+
+  /// 向下相容的趨勢線列表
+  ///
+  /// 這個屬性是為了向下相容而保留的，新的程式碼應該使用 [trendLines] 屬性。
+  /// 這是一個不可修改的列表，所以請不要使用 `add` 或 `clear` 方法。
+  /// 如果需要修改趨勢線，請使用 [addTrendLine] 或 [removeTrendLine] 方法。
   List<double?> trends;
 
   CandleData({
@@ -43,9 +55,56 @@ class CandleData {
     required this.volume,
     this.high,
     this.low,
+    Map<String, TrendLine>? trendLines,
     List<double?>? trends,
-  }) : this.trends = List.unmodifiable(trends ?? []);
+  })  : this.trendLines = trendLines ?? {},
+        this.trends = List.unmodifiable(trends ?? []);
 
+  /// 添加趨勢線
+  CandleData addTrendLine(TrendLine trendLine) {
+    final newTrendLines = Map<String, TrendLine>.from(trendLines);
+    newTrendLines[trendLine.id] = trendLine;
+
+    return CandleData(
+      timestamp: timestamp,
+      open: open,
+      close: close,
+      high: high,
+      low: low,
+      volume: volume,
+      trendLines: newTrendLines,
+      trends: trends,
+    );
+  }
+
+  /// 移除趨勢線
+  CandleData removeTrendLine(String trendLineId) {
+    final newTrendLines = Map<String, TrendLine>.from(trendLines);
+    newTrendLines.remove(trendLineId);
+
+    return CandleData(
+      timestamp: timestamp,
+      open: open,
+      close: close,
+      high: high,
+      low: low,
+      volume: volume,
+      trendLines: newTrendLines,
+      trends: trends,
+    );
+  }
+
+  /// 從 trendLines Map 創建舊的 trends 列表
+  static List<double?> trendMapToList(Map<String, TrendLine> trendLines) {
+    final result = <double?>[];
+    final sortedKeys = trendLines.keys.toList()..sort();
+    for (final key in sortedKeys) {
+      result.add(trendLines[key]?.value);
+    }
+    return List.unmodifiable(result);
+  }
+
+  /// 計算移動平均線並返回值列表
   static List<double?> computeMA(List<CandleData> data, [int period = 7]) {
     // If data is not at least twice as long as the period, return nulls.
     if (data.length < period * 2) return List.filled(data.length, null);
@@ -68,6 +127,56 @@ class CandleData {
         result.add(null);
       }
     }
+    return result;
+  }
+
+  /// 計算移動平均線並返回帶有趨勢線的蠟燭資料列表
+  static List<CandleData> computeMAWithTrendLine(
+    List<CandleData> data,
+    int period,
+  ) {
+    final maValues = computeMA(data, period);
+    final result = <CandleData>[];
+
+    for (int i = 0; i < data.length; i++) {
+      final candle = data[i];
+      final trendLine = MALine(period, value: maValues[i]);
+
+      result.add(candle.addTrendLine(trendLine));
+    }
+
+    return result;
+  }
+
+  /// 計算指數移動平均線並返回值列表
+  static List<double?> computeEMA(List<CandleData> data, [int period = 7]) {
+    if (data.length < period * 2) return List.filled(data.length, null);
+
+    final List<double?> result = [];
+    // 填充前 period 個值為 null
+    result.addAll(List.filled(period, null));
+
+    // 計算第一個 EMA 值（使用簡單移動平均作為初始值）
+    final firstPeriod =
+        data.take(period).map((d) => d.close).whereType<double>().toList();
+    if (firstPeriod.isEmpty) return List.filled(data.length, null);
+
+    double ema = firstPeriod.reduce((a, b) => a + b) / firstPeriod.length;
+
+    // 計算權重因子
+    final multiplier = 2.0 / (period + 1);
+
+    // 計算剩餘資料點的 EMA
+    for (int i = period; i < data.length; i++) {
+      final curr = data[i].close;
+      if (curr != null) {
+        ema = (curr - ema) * multiplier + ema;
+        result.add(ema);
+      } else {
+        result.add(null);
+      }
+    }
+
     return result;
   }
 

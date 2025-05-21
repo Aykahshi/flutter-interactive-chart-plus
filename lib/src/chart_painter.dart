@@ -286,16 +286,23 @@ class ChartPainter extends CustomPainter {
       );
     }
 
-    // Draw trend line
+    // 繪制趨勢線 - 向下相容的方式
     for (int j = 0; j < candle.trends.length; j++) {
-      final trendLinePaint = params.style.trendLineStyles.at(j) ??
-          (Paint()
+      final trendLinePaint = j < params.style.trendLineStyles.length
+          ? params.style.trendLineStyles[j]
+          : (Paint()
             ..strokeWidth = 2.0
             ..strokeCap = StrokeCap.round
             ..color = Colors.blue);
 
-      final pt = candle.trends.at(j); // current data point
-      final prevPt = params.candles.at(i - 1)?.trends.at(j);
+      final pt = candle.trends.length > j
+          ? candle.trends[j]
+          : null; // current data point
+      final prevCandle = i > 0 ? params.candles[i - 1] : null;
+      final prevPt = prevCandle != null && prevCandle.trends.length > j
+          ? prevCandle.trends[j]
+          : null;
+
       if (pt != null && prevPt != null) {
         canvas.drawLine(
           Offset(x - params.candleWidth, params.fitPrice(prevPt)),
@@ -303,25 +310,58 @@ class ChartPainter extends CustomPainter {
           trendLinePaint,
         );
       }
+
       if (i == 0) {
         // In the front, draw an extra line connecting to out-of-window data
-        if (pt != null && params.leadingTrends?.at(j) != null) {
+        if (pt != null &&
+            params.leadingTrends != null &&
+            params.leadingTrends!.length > j &&
+            params.leadingTrends![j] != null) {
           canvas.drawLine(
             Offset(x - params.candleWidth,
-                params.fitPrice(params.leadingTrends!.at(j)!)),
+                params.fitPrice(params.leadingTrends![j]!)),
             Offset(x, params.fitPrice(pt)),
             trendLinePaint,
           );
         }
       } else if (i == params.candles.length - 1) {
         // At the end, draw an extra line connecting to out-of-window data
-        if (pt != null && params.trailingTrends?.at(j) != null) {
+        if (pt != null &&
+            params.trailingTrends != null &&
+            params.trailingTrends!.length > j &&
+            params.trailingTrends![j] != null) {
           canvas.drawLine(
             Offset(x, params.fitPrice(pt)),
             Offset(
               x + params.candleWidth,
-              params.fitPrice(params.trailingTrends!.at(j)!),
+              params.fitPrice(params.trailingTrends![j]!),
             ),
+            trendLinePaint,
+          );
+        }
+      }
+    }
+
+    // 繪制新的趨勢線實作
+    int trendIndex = 0;
+    for (final trendLine in candle.trendLines.values) {
+      if (trendLine.value == null) continue;
+
+      // 獲取趨勢線樣式
+      final Paint trendLinePaint =
+          params.style.getTrendLineStyle(trendLine, trendIndex);
+      trendIndex++;
+
+      // 繪制趨勢線
+      if (i > 0) {
+        final prevCandle = params.candles[i - 1];
+        final prevTrendLine = prevCandle.trendLines[trendLine.id];
+
+        if (prevTrendLine != null && prevTrendLine.value != null) {
+          canvas.drawLine(
+            Offset(
+                x - params.candleWidth, params.fitPrice(prevTrendLine.value!)),
+            Offset(x, params.fitPrice(trendLine.value!)),
             trendLinePaint,
           );
         }

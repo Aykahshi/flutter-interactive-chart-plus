@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'trend_line.dart';
+
 class ChartStyle {
   /// The percentage height of volume.
   ///
@@ -41,9 +43,10 @@ class ChartStyle {
   /// The color of the `volume` bars when `volume` is lower than `open` volume.
   final Color volumeLossColor;
 
-  /// The style of trend lines. If there are multiple lines, their styles will
-  /// be chosen in the order of appearance in this list. If this list is shorter
-  /// than the number of trend lines, a default blue paint will be applied.
+  /// 趨勢線樣式列表
+  ///
+  /// 如果有多條趨勢線，它們的樣式將按照在這個列表中的出現順序選擇。
+  /// 如果這個列表比趨勢線的數量短，則會使用預設的藍色繪制。
   final List<Paint> trendLineStyles;
 
   /// The color of the price grid line.
@@ -59,6 +62,16 @@ class ChartStyle {
 
   /// The style of current price labels (on the right of the chart).
   final CurrentPriceStyle currentPriceStyle;
+  
+  /// 獲取趨勢線樣式，如果沒有設定，則使用趨勢線的預設樣式
+  Paint getTrendLineStyle(TrendLine trendLine, int index) {
+    // 如果索引在範圍內，則使用對應的樣式
+    if (index < trendLineStyles.length) {
+      return trendLineStyles[index];
+    }
+    // 否則使用趨勢線的預設樣式
+    return trendLine.defaultStyle;
+  }
 
   const ChartStyle({
     this.volumeHeightFactor = 0.2,
